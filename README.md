@@ -16,7 +16,7 @@ poetry run uvicorn medibot.main:app --reload
 
 Health check: http://localhost:8000/health · API docs: http://localhost:8000/docs
 
-Env vars are loaded from `.env` (or `.dev.env` / `.staging.env` based on `ENVIRONMENT`).
+Env vars are loaded from `.env` (optional).
 
 ## Adding an API
 
