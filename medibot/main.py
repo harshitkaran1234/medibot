@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from medibot.client import dependency
 from medibot.common import config
 from medibot.common.exception_handler import (
     base_exception_handler,
@@ -13,9 +14,10 @@ from medibot.common.exception_handler import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # init clients (db, cache, etc.) here
+    await dependency.init()
     yield
-    # close clients here
+
+    await dependency.close()
 
 
 def register_handlers(app: FastAPI) -> None:
