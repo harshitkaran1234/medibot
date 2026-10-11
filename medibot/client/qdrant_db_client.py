@@ -11,7 +11,9 @@ class QdrantDBClient(IntegrationClient):
         super().close()
 
     def init(self) -> None:
-        self.client = AsyncQdrantClient(url=config.QDRANT_URL, api_key=config.QDRANT_API_KEY or None)
+        self.client = AsyncQdrantClient(
+            url=config.QDRANT_URL, api_key=config.QDRANT_API_KEY or None
+        )
 
 
 qdrant_db_client = QdrantDBClient()
