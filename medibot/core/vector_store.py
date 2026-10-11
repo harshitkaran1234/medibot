@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain_qdrant import FastEmbedSparse, QdrantVectorStore, RetrievalMode
 from qdrant_client import QdrantClient, models
@@ -40,13 +42,36 @@ def create_collection(client: QdrantClient, recreate: bool = False) -> None:
         )
 
 
+@lru_cache
+def get_dense_embedding() -> FastEmbedEmbeddings:
+    # Cached: model loading is the slow part, so both stores share one instance
+    return FastEmbedEmbeddings(model_name=config.EMBEDDING_MODEL)
+
+
+@lru_cache
+def get_sparse_embedding() -> FastEmbedSparse:
+    return FastEmbedSparse(model_name=config.SPARSE_MODEL)
+
+
 def get_vector_store(client: QdrantClient) -> QdrantVectorStore:
+    """Hybrid store: dense + BM25 prefetches fused with RRF in one Qdrant query."""
     return QdrantVectorStore(
         client=client,
         collection_name=config.QDRANT_COLLECTION,
-        embedding=FastEmbedEmbeddings(model_name=config.EMBEDDING_MODEL),
-        sparse_embedding=FastEmbedSparse(model_name=config.SPARSE_MODEL),
+        embedding=get_dense_embedding(),
+        sparse_embedding=get_sparse_embedding(),
         retrieval_mode=RetrievalMode.HYBRID,
         vector_name=DENSE_VECTOR_NAME,
         sparse_vector_name=SPARSE_VECTOR_NAME,
+    )
+
+
+def get_dense_vector_store(client: QdrantClient) -> QdrantVectorStore:
+    """Dense-only baseline on the same collection, used to compare against hybrid."""
+    return QdrantVectorStore(
+        client=client,
+        collection_name=config.QDRANT_COLLECTION,
+        embedding=get_dense_embedding(),
+        retrieval_mode=RetrievalMode.DENSE,
+        vector_name=DENSE_VECTOR_NAME,
     )
